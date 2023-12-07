@@ -37,9 +37,9 @@
         <button class="track" data-spotify-id=""></button>
     </div>
 
-    <div id="embed-iframe"></div>
+    <!-- <div id="embed-iframe"></div>
     <script src="https://open.spotify.com/embed/iframe-api/v1" async>
-    </script>
+    </script> -->
 
     <script type="text/javascript">
 
@@ -47,13 +47,24 @@
     var client_secret = '6a84941e44414903bc3dcf20606b73f5';
     var token_url = 'https://accounts.spotify.com/api/token';
     // Classic hits everyone should know
-    var playlist_url = 'https://api.spotify.com/v1/playlists/3HOj7HdL0TNKxcXZXgr7CG/tracks?limit=100'
+    var playlist_url = 'https://api.spotify.com/v1/playlists/3HOj7HdL0TNKxcXZXgr7CG/tracks?market=US&limit=100'
     var access_token = null;
     var offset = 0;
     var playlist = [];
     var correctIndex = null;
+    var player = null;
+    var timer = null;
+    var score = 0;
 
-    // document.getElementById("play").addEventListener('click', getSongs);
+    document.getElementById("play").addEventListener("click", getSongs);
+    document.querySelectorAll('.track').forEach((track, index) => {
+        track.addEventListener('click', () => {
+            console.log('index clicked', index);
+            check(index);
+            setupGame();
+        });
+    });
+    //getSongs();
 
     function getSongs() {
         fetch(token_url, {
@@ -70,7 +81,6 @@
 
     function getPlaylistTracks(token) {
         access_token = token;
-        //console.log(access_token);
 
         fetch(playlist_url, {
             headers: {
@@ -92,13 +102,23 @@
     }
 
     function addToPlaylist(data) {
+        console.log('data', data);
+        console.log("inside add to playlist");
         offset += 100;
 
-        if (data.items.length > 0) {
-            playlist = playlist.concat(data.items);
+        var items = data.items;
+        console.log('items', items);
+        if (items.length > 0) {
+            for (let i = 0; i < items.length; i++) {
+                //console.log('item', items[i]);
+                if (items[i].track.preview_url) {
+                    playlist.push(items[i].track);
+                }
+            }
             morePlaylistTracks();
         }
         else {
+            console.log('num songs', playlist.length);
             setupGame();
         }
     }
@@ -108,6 +128,8 @@
     }
 
     function setupGame() {
+
+        console.log('playlist', playlist);
 
         // Randomly choose 4 songs from the playlist
 
@@ -136,72 +158,67 @@
         var t = 0
         document.querySelectorAll('.track').forEach(
             track => {
-            track.textContent = playlist[track_index[t]].track.name + ' by ' + playlist[track_index[t]].track.artists[0].name;
-            track.setAttribute('data-spotify-id', playlist[track_index[t]].track.uri);
+            track.textContent = playlist[track_index[t]].name + ' by ' + playlist[track_index[t]].artists[0].name;
             t++;
         })
+
+        // Choose a random song to play
+
+        correctIndex = getRandomInt(4);
+        if (player == null) {
+            console.log('correct index', track_index[correctIndex]);
+            console.log(playlist[track_index[correctIndex]].preview_url)
+            player = new Audio(playlist[track_index[correctIndex]].preview_url);
+        } else {
+            player.pause();
+            player.src = playlist[track_index[correctIndex]].preview_url;
+        }
+        if (timer != null)
+            clearTimeout(timer);
+        timer = setTimeout(timeout, 10000);
+        player.play();
         
+    }
+
+    function timeout() {
+        player.pause();
+        timer = null;
+    }
+
+    function check(indexClicked) {
+        if (indexClicked == correctIndex) {
+            console.log("Correct");
+            score++;
+        }
+        else {
+            console.log("Incorrect");
+
+        }
     }
 
     // window.onSpotifyIframeApiReady = (IFrameAPI) => {
 
     //     const element = document.getElementById('embed-iframe');
     //     const options = {
-    //             width: '50%',
-    //             height: '100',
+    //         width: '50%',
+    //         height: '100',
     //     };
     //     const callback = (EmbedController) => {
-    //         document.querySelectorAll('.track').forEach(track => {
+    //         getSongs();
+    //         document.getElementById("play").addEventListener('click', () => {
+    //             playRandom(EmbedController);
+    //         });
+    //         document.querySelectorAll('.track').forEach((track, index) => {
     //             track.addEventListener('click', () => {
-    //                 EmbedController.loadUri(track.dataset.spotifyId);
-    //                 EmbedController.play();
-    //                 console.log('click play ' + track.dataset.spotifyId);
+    //                 console.log('index clicked', index);
+    //                 check(index);
+    //                 setupGame();
+    //                 playRandom(EmbedController);
     //             });
     //         });
     //     };
     //     IFrameAPI.createController(element, options, callback);
-
     // };
-
-    function playRandom(EmbedController) {
-        correctIndex = getRandomInt(4);
-        ele = document.getElementsByClassName("track")[correctIndex];
-        EmbedController.loadUri(ele.getAttribute('data-spotify-id'));
-        EmbedController.play();
-    }
-
-    function check(indexClicked) {
-        if (indexClicked == correctIndex) {
-            console.log("CORRECT");
-        }
-        else {
-            console.log("INCORRECT");
-        }
-    }
-
-    window.onSpotifyIframeApiReady = (IFrameAPI) => {
-
-        const element = document.getElementById('embed-iframe');
-        const options = {
-            width: '50%',
-            height: '100',
-        };
-        const callback = (EmbedController) => {
-            getSongs();
-            document.getElementById("play").addEventListener('click', () => {
-                playRandom(EmbedController);
-            });
-            document.querySelectorAll('.track').forEach((track, index) => {
-                track.addEventListener('click', () => {
-                    console.log('index clicked', index);
-                    check(index);
-                    setupGame();
-                    playRandom(EmbedController);
-                });
-            });
-        };
-        IFrameAPI.createController(element, options, callback);
-    };
 
     </script>
 </body>
