@@ -105,18 +105,15 @@
     function getPlaylistTracks(token) {
         var input = document.getElementById('playlist').value;
         var match = input.match(/playlist\/([^?]+)/);
+        playlist = [];
 
         if (match) {
             const playlist_id = match[1];
-            console.log('playlist id', playlist_id)
             playlist_url = "https://api.spotify.com/v1/playlists/" +
                            playlist_id + "/tracks?market=US&limit=100";
-        } else {
-            // no match found
         }
 
         access_token = token;
-
 
         fetch(playlist_url, {
             headers: {
@@ -167,7 +164,6 @@
 
     function setupGame() {
         // Randomly choose 4 songs from the playlist
-
         var duplicate = 1;
         const track_index = [];
 
@@ -183,7 +179,6 @@
         }
 
         // Populate song buttons
-
         var t = 0
         document.querySelectorAll('.track').forEach(
             track => {
@@ -198,11 +193,8 @@
 
 
         // Choose a random song to play
-
         correctIndex = getRandomInt(4);
         if (player == null) {
-            // console.log('correct index', track_index[correctIndex]);
-            // console.log(playlist[track_index[correctIndex]].preview_url)
             player = new Audio(playlist[track_index[correctIndex]].preview_url);
         } else {
             player.pause();
@@ -210,35 +202,29 @@
         }
         if (timer != null)
             clearTimeout(timer);
-        timer = setTimeout(timeout, 10000);
-        player.play(); 
-    }
-
-    function timeout() {
-        if (timer != null) {
-            player.pause();
-            endGame();
-        }
+        timer = setTimeout(endGame, 10000);
+        player.play();
     }
 
     function check(indexClicked) {
+        // Return true if correct and false otherwise
         if (indexClicked == correctIndex) {
-            console.log("Correct");
             score++;
             score_display.innerText = "Score: " + score
             return true;
         }
         else {
-            console.log("Incorrect");
-            timer = null;
-            player.pause();
             return false;
         }
     }
 
     function endGame() {
         // Cancel timer
-        timer = null;
+        if (timer != null) {
+            clearTimeout(timer);
+        }
+
+        player.pause();
 
         // Display game results
         document.getElementById('tracks').hidden = true;
